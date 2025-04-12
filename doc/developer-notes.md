@@ -487,6 +487,8 @@ $ ./build/test/functional/test_runner.py --valgrind
 
 ### Compiling for test coverage
 
+#### Using LCOV
+
 LCOV can be used to generate a test coverage report based upon `ctest`
 execution. LCOV must be installed on your system (e.g. the `lcov` package
 on Debian/Ubuntu).
@@ -515,6 +517,104 @@ To enable test parallelism:
 ```
 cmake -DJOBS=$(nproc) -P build/Coverage.cmake
 ```
+
+#### Using LLVM/Clang toolchain
+
+The following generates a coverage report for unit tests and functional tests.
+
+Configure the build with the following flags:
+
+> Consider building with a clean state using `rm -rf build`
+
+```shell
+# MacOS may instead require `-DCMAKE_C_COMPILER="$(brew --prefix llvm)/bin/clang" -DCMAKE_CXX_COMPILER="$(brew --prefix llvm)/bin/clang++"`
+cmake -B build -DCMAKE_C_COMPILER="clang" \
+   -DCMAKE_CXX_COMPILER="clang++" \
+   -DAPPEND_CFLAGS="-fprofile-instr-generate -fcoverage-mapping" \
+   -DAPPEND_CXXFLAGS="-fprofile-instr-generate -fcoverage-mapping" \
+   -DAPPEND_LDFLAGS="-fprofile-instr-generate -fcoverage-mapping"
+cmake --build build # Use "-j N" here for N parallel jobs.
+```
+
+Generating the raw profile data based on `ctest` and functional tests execution:
+
+```shell
+# Create directory for raw profile data
+mkdir -p build/raw_profile_data
+
+# Run tests to generate profiles
+LLVM_PROFILE_FILE="$(pwd)/build/raw_profile_data/%m_%p.profraw" ctest --test-dir build # Use "-j N" here for N parallel jobs.
+LLVM_PROFILE_FILE="$(pwd)/build/raw_profile_data/%m_%p.profraw" build/test/functional/test_runner.py # Use "-j N" here for N parallel jobs
+
+# Merge all the raw profile data into a single file
+find build/raw_profile_data -name "*.profraw" | xargs llvm-profdata merge -o build/coverage.profdata
+```
+
+> **Note:** The "counter mismatch" warning can be safely ignored, though it can be resolved by updating to Clang 19.
+> The warning occurs due to version mismatches but doesn't affect the coverage report generation.
+
+Generating the coverage report:
+
+```shell
+llvm-cov show \
+    --object=build/bin/test_bitcoin \
+    --object=build/bin/bitcoind \
+    -Xdemangler=llvm-cxxfilt \
+    --instr-profile=build/coverage.profdata \
+    --ignore-filename-regex="src/crc32c/|src/leveldb/|src/minisketch/|src/secp256k1/|src/test/" \
+    --format=html \
+    --show-instantiation-summary \
+    --show-line-counts-or-regions \
+    --show-expansions \
+    --output-dir=build/coverage_report \
+    --project-title="Bitcoin Core Coverage Report"
+```
+
+> **Note:** The "functions have mismatched data" warning can be safely ignored, the coverage report will still be generated correctly despite this warning.
+> This warning occurs due to profdata mismatch created during the merge process for shared libraries.
+
+The generated coverage report can be accessed at `build/coverage_report/index.html`.
+
+#### Compiling for Fuzz Coverage
+
+```shell
+cmake -B build \
+   -DCMAKE_C_COMPILER="clang" \
+   -DCMAKE_CXX_COMPILER="clang++" \
+   -DCMAKE_C_FLAGS="-fprofile-instr-generate -fcoverage-mapping" \
+   -DCMAKE_CXX_FLAGS="-fprofile-instr-generate -fcoverage-mapping" \
+   -DBUILD_FOR_FUZZING=ON
+cmake --build build # Use "-j N" here for N parallel jobs.
+```
+
+Running fuzz tests with one or more targets
+
+```shell
+# For single target run with the target of choice
+LLVM_PROFILE_FILE="$(pwd)/build/raw_profile_data/txorphan.profraw" ./build/test/fuzz/test_runner.py ../qa-assets/fuzz_corpora txorphan
+# If running for multiple targets
+LLVM_PROFILE_FILE="$(pwd)/build/raw_profile_data/%m_%p.profraw" ./build/test/fuzz/test_runner.py ../qa-assets/fuzz_corpora
+# Merge profiles
+llvm-profdata merge build/raw_profile_data/*.profraw -o build/coverage.profdata
+```
+
+Generate report:
+
+```shell
+llvm-cov show \
+    --object=build/bin/fuzz \
+    -Xdemangler=llvm-cxxfilt \
+    --instr-profile=build/coverage.profdata \
+    --ignore-filename-regex="src/crc32c/|src/leveldb/|src/minisketch/|src/secp256k1/|src/test/" \
+    --format=html \
+    --show-instantiation-summary \
+    --show-line-counts-or-regions \
+    --show-expansions \
+    --output-dir=build/coverage_report \
+    --project-title="Bitcoin Core Fuzz Coverage Report"
+```
+
+The generated coverage report can be accessed at `build/coverage_report/index.html`.
 
 ### Performance profiling with perf
 
@@ -1234,6 +1334,9 @@ Current subtrees include:
 
 - src/minisketch
   - Upstream at https://github.com/bitcoin-core/minisketch ; maintained by Core contributors.
+
+- src/ipc/libmultiprocess
+  - Upstream at https://github.com/bitcoin-core/libmultiprocess ; maintained by Core contributors.
 
 Upgrading LevelDB
 ---------------------
