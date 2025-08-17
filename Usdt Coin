@@ -1,0 +1,43 @@
+**USDT (Tether)** is a **stablecoin** cryptocurrency designed to maintain a 1:1 value peg with the US Dollar (USD). Here's a concise overview:
+
+### Key Features:
+1. **Stability**:  
+   Each USDT is backed by reserves (cash, cash equivalents, bonds, etc.) held by Tether Limited, aiming to keep its value at ~$1 USD.
+
+2. **Purpose**:  
+   - Minimize volatility compared to Bitcoin/ETH.  
+   - Facilitate trading, transfers, and hedging in crypto markets.  
+   - Serve as a "digital dollar" for DeFi, lending, and payments.
+
+3. **Blockchains**:  
+   Runs on multiple networks: Ethereum (ERC-20), TRON (TRC-20), Solana, Binance Smart Chain, and others.
+
+4. **Issuer**:  
+   Managed by **Tether Limited**, owned by iFinex Inc. (same parent as Bitfinex exchange).
+
+---
+
+### Controversies & Risks:
+- **Transparency Concerns**:  
+  Past audits questioned reserve adequacy. Tether now publishes quarterly reserve reports ([view here](https://tether.to/en/transparency/)).
+- **Regulatory Scrutiny**:  
+  Faced fines ($41M by CFTC in 2021) over reserve misstatements.
+- **Centralization**:  
+  Tether controls issuance/freezing of USDT (e.g., to comply with sanctions).
+- **Depeg Events**:  
+  Briefly lost its $1 peg during market crashes (e.g., Terra collapse in 2022).
+
+---
+
+### Use Cases:
+- **Trading**: Pair with BTC/ETH to avoid volatility.  
+- **Remittances**: Low-cost cross-border transfers.  
+- **Earn Yield**: Lend/stake in DeFi protocols for interest.  
+- **Merchant Payments**: Stable value for crypto payments.
+
+---
+
+### Alternatives:
+Other USD-backed stablecoins include **USDC** (Circle), **DAI** (decentralized), and **BUSD** (Binance-Paxos).
+
+Always verify official sources ([Tether Transparency](https://tether.to/en/transparency/)) and understand risks before using USDT.
