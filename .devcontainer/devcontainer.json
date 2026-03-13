@@ -1,0 +1,282 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {}
+}
+# Devcontainer.json - Complete Guide
+
+A `devcontainer.json` file is a configuration file used by **Development Containers** to define a consistent, containerized development environment. It works with tools like **Visual Studio Code**, **GitHub Codespaces**, and **Gitpod** to automatically set up a container with all the tools, extensions, and settings your project needs.
+
+## 📦 What is a Dev Container?
+
+A development container (or dev container) is a fully featured development environment running inside a Docker container. Instead of installing tools locally, you define the environment in code, and the container provides a consistent setup for everyone working on the project.
+
+## 🧱 Basic Structure
+
+A `devcontainer.json` file is usually placed in the `.devcontainer` folder at the root of your project. Here's a minimal example:
+
+```json
+{
+  "name": "My Project Dev Container",
+  "image": "microsoft/vscode-devcontainers:javascript-node",
+  "extensions": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode"
+  ],
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "forwardPorts": [3000],
+  "postCreateCommand": "npm install"
+}
+```
+
+## 🔑 Key Properties
+
+| Property | Description | Example |
+|----------|-------------|---------|
+| `name` | Display name of the dev container | `"My Project"` |
+| `image` | Docker image to use | `"node:16"` |
+| `build` | Build a custom Docker image using a Dockerfile | `{ "dockerfile": "Dockerfile" }` |
+| `dockerFile` | Path to Dockerfile (legacy, use `build.dockerfile`) | `"Dockerfile"` |
+| `context` | Build context for Dockerfile | `"."` |
+| `features` | Add additional tools/features (e.g., Docker-in-Docker) | `{ "ghcr.io/devcontainers/features/docker-in-docker": {} }` |
+| `extensions` | Array of VS Code extension IDs to install | `["ms-python.python"]` |
+| `settings` | VS Code settings (overrides user/workspace settings) | `{ "editor.formatOnSave": true }` |
+| `forwardPorts` | Ports to forward from container to host | `[3000, 8080]` |
+| `portsAttributes` | Configure behavior for forwarded ports | `{ "3000": { "label": "App" } }` |
+| `remoteUser` | User to run as inside container | `"node"` |
+| `containerUser` | Same as remoteUser | |
+| `postCreateCommand` | Command to run after container is created | `"npm install"` |
+| `postStartCommand` | Command to run each time container starts | `"npm run dev"` |
+| `postAttachCommand` | Command to run when VS Code attaches | |
+| `workspaceFolder` | Default path to open in VS Code | `"/workspace"` |
+| `mounts` | Additional mounts (bind volumes) | `[ "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind" ]` |
+| `runArgs` | Additional Docker run arguments | `["--memory=2g", "--cpus=2"]` |
+| `containerEnv` | Environment variables set in container | `{ "DATABASE_URL": "postgres://..." }` |
+
+## 🚀 Common Use Cases & Examples
+
+### **Node.js Development**
+
+```json
+{
+  "name": "Node.js App",
+  "image": "node:18",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/common-utils:1": {}
+  },
+  "extensions": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "ms-vscode.vscode-typescript-next"
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": true
+    }
+  },
+  "forwardPorts": [3000],
+  "postCreateCommand": "npm install",
+  "remoteUser": "node"
+}
+```
+
+### **Python Development**
+
+```json
+{
+  "name": "Python 3.10",
+  "image": "mcr.microsoft.com/devcontainers/python:3.10",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {}
+  },
+  "extensions": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "njpwerner.autodocstring",
+    "ms-toolsai.jupyter"
+  ],
+  "settings": {
+    "python.defaultInterpreterPath": "/usr/local/bin/python",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
+    "python.formatting.blackPath": "/usr/local/py-utils/bin/black"
+  },
+  "postCreateCommand": "pip install -r requirements.txt",
+  "forwardPorts": [8000]
+}
+```
+
+### **Java Development**
+
+```json
+{
+  "name": "Java",
+  "image": "mcr.microsoft.com/devcontainers/java:17",
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "17",
+      "installMaven": true,
+      "installGradle": false
+    }
+  },
+  "extensions": [
+    "vscjava.vscode-java-pack",
+    "vscjava.vscode-spring-initializr",
+    "redhat.vscode-xml"
+  ],
+  "settings": {
+    "java.configuration.runtimes": [
+      {
+        "name": "JavaSE-17",
+        "path": "/usr/local/sdkman/candidates/java/current"
+      }
+    ]
+  },
+  "forwardPorts": [8080],
+  "postCreateCommand": "java -version"
+}
+```
+
+### **Full Stack with Docker Compose**
+
+If your project uses Docker Compose (e.g., app + database), you can define a dev container that works alongside other services.
+
+```json
+{
+  "name": "Full Stack App",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "extensions": [
+    "ms-azuretools.vscode-docker",
+    "ms-vscode-remote.remote-containers"
+  ],
+  "shutdownAction": "stopCompose",
+  "remoteUser": "node"
+}
+```
+
+Example `docker-compose.yml`:
+
+```yaml
+version: '3'
+services:
+  app:
+    image: node:16
+    volumes:
+      - .:/workspace:cached
+    command: sleep infinity
+    ports:
+      - "3000:3000"
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+```
+
+## 🌟 Using Dev Containers in GitHub Codespaces
+
+When you push a repository with a `.devcontainer/devcontainer.json` to GitHub, **Codespaces** automatically detects it and offers to create a codespace with that environment. This is perfect for team consistency and on‑boarding new contributors.
+
+## 🧪 Features
+
+**Features** are self-contained, shareable units of configuration that install additional tools into your dev container. They are defined in the [devcontainer features repository](https://github.com/devcontainers/features). You can add them like this:
+
+```json
+"features": {
+  "ghcr.io/devcontainers/features/docker-in-docker:1": {},
+  "ghcr.io/devcontainers/features/aws-cli:1": {}
+}
+```
+
+This adds Docker inside the container and the AWS CLI without writing custom Dockerfile steps.
+
+## ⚙️ Lifecycle Commands
+
+You can run commands at different stages:
+
+- **`onCreateCommand`** – Runs when the container is first created.
+- **`updateContentCommand`** – Runs when the container is created or updated (e.g., after a pull).
+- **`postCreateCommand`** – Runs after the container is created and the workspace is mounted.
+- **`postStartCommand`** – Runs every time the container starts.
+- **`postAttachCommand`** – Runs when VS Code attaches to the container.
+
+These are useful for installing dependencies, building projects, or starting dev servers.
+
+## 🛠️ Advanced Configuration
+
+### Using a Dockerfile
+
+```json
+{
+  "name": "Custom Image",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".",
+    "args": {
+      "VARIANT": "16"
+    }
+  },
+  ...
+}
+```
+
+### Environment Variables
+
+Set environment variables with `containerEnv` or `remoteEnv`:
+
+```json
+"containerEnv": {
+  "NODE_ENV": "development"
+}
+```
+
+### Forwarding Multiple Ports
+
+```json
+"forwardPorts": [3000, 5000],
+"portsAttributes": {
+  "3000": {
+    "label": "React App",
+    "onAutoForward": "notify"
+  },
+  "5000": {
+    "label": "API",
+    "onAutoForward": "openBrowser"
+  }
+}
+```
+
+## 📚 Best Practices
+
+1. **Commit `devcontainer.json` to your repository** so all team members share the same environment.
+2. **Use features** instead of writing custom installation scripts when possible.
+3. **Pin image versions** to avoid unexpected breaking changes.
+4. **Keep the environment minimal** – only install what is necessary for development.
+5. **Test your dev container** by rebuilding it (`Remote-Containers: Rebuild Container`).
+6. **Use `.devcontainer/devcontainer.json`** (not at root) to keep your project root clean.
+7. **Consider using Docker Compose** if you need multiple services (database, cache, etc.).
+8. **Document any custom steps** that might be needed outside the container (e.g., environment variables that must be set on host).
+
+## 🐞 Troubleshooting
+
+- **Container won't start**: Check Docker logs (`docker logs <container-id>`).
+- **Extensions not installing**: Ensure extension IDs are correct.
+- **Commands failing**: Verify paths and commands; use absolute paths when possible.
+- **Ports not accessible**: Confirm `forwardPorts` and check firewall settings.
+- **Rebuild container**: Run `Remote-Containers: Rebuild Container` to apply changes.
+
+## 🔗 References
+
+- [Official devcontainers specification](https://containers.dev/)
+- [VS Code Dev Containers documentation](https://code.visualstudio.com/docs/remote/containers)
+- [GitHub Codespaces documentation](https://docs.github.com/en/codespaces)
+- [Dev Container Features repository](https://github.com/devcontainers/features)
+
+By using `devcontainer.json`, you ensure that every developer on your team – and every Codespace – starts with exactly the same development environment, eliminating "works on my machine" problems.
